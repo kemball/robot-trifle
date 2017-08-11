@@ -1,0 +1,8 @@
+*.yaml
+smoothie
+containers
+calibrations
+*.csv
+__pycache__
+logs
+update_pippin.sh
