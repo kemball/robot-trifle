@@ -14,7 +14,8 @@ example_layout ={
 	},
 	"sleepy":{
 		"A1":("glucose",200,5),
-		"A2":("glucose",200,5)
+		"A2":("glucose",200,5),
+		"A3":("water",200,66)
 	}
 }
 
@@ -28,7 +29,8 @@ example_media = {
 ex_goal={
 	"wells":96,
 	"vol":200,
-	"name":"destination"
+	"name":"destination",
+	"excess":"water"
 }
 
 def offset_name(offset):
@@ -47,7 +49,58 @@ def parse_layout(layfile):
 	# does the layout file have insane volumes
 	# how much is there supposed to be?
 
+def leave_one_out(goal=ex_goal,media=example_media):
+
+
+	dest_wellnames = [goal["name"]+"."+offset_name(i) for i in range(0,goal["wells"])]
+	spec_dict = {dw:{} for dw in dest_wellnames}
+	sorted_cpds = sorted(media.keys())
+	sorted_wells = sorted(dest_wellnames)
+	num_replicates = int(goal["wells"]/len(sorted_cpds))
+
+	for i,cpd in enumerate(sorted_cpds):
+		for j,wn in enumerate(sorted_wells):
+			if (j<num_replicates*i) or (j>= num_replicates*(i+1)):
+				spec_dict[wn][cpd]=media[cpd]
+	return spec_dict
+
+def flatten(plan,layout):
+	totals = defaultdict(int)
+	locations = defaultdict(list)
+	for container in layout.keys():
+		for well,contents in layout[container].items():
+			totals[contents[0]]+=contents[1]*contents[2]
+			locations[contents[0]].append((
+				container+"."+well,
+				contents[1],
+				contents[2]))
+	
+	def get_from_locations(cpd,moles,locations):
+		for i,loc in enumerate(locations[cpd]):
+			source,volume,molarity = loc
+			if volume*molarity>= moles:
+				amt = moles/molarity
+				nt = (source,volume-amt,molarity)
+				#i have to do it this way because tuples are immutable.
+				locations[cpd][i] = nt
+				return(source,amt)
+		print("not enough %s " % cpd)
+
+	
+
 def layout_CDM(layout,goal=ex_goal,media=example_media,filename="goals.csv"):
+	
+	def get_from_locations(cpd,moles,locations):
+		for i,loc in enumerate(locations[cpd]):
+			source,volume,molarity = loc
+			if volume*molarity>= moles:
+				amt = moles/molarity
+				nt = (source,volume-amt,molarity)
+				#i have to do it this way because tuples are immutable.
+				locations[cpd][i] = nt
+				return(source,amt)
+		print("not enough %s " % cpd)
+
 	totals = defaultdict(int)
 	locations = defaultdict(list)
 	for container in layout.keys():
@@ -66,18 +119,7 @@ def layout_CDM(layout,goal=ex_goal,media=example_media,filename="goals.csv"):
 		have = totals[compound]
 		if reqd>have:
 			raise Exception("not enough %s, I need %s umol and I have %s umol"%(compound,reqd,have))
-
-	def get_from_locations(cpd,moles,locations):
-		for i,loc in enumerate(locations[cpd]):
-			source,volume,molarity = loc
-			if volume*molarity>= moles:
-				amt = moles/molarity
-				nt = (source,volume-amt,molarity)
-				#i have to do it this way because tuples are immutable.
-				locations[cpd][i] = nt
-				return(source,amt)
-		print("not enough %s " % cpd)
-
+	
 		
 	matrix = [{"wellname":goal["name"]+"."+offset_name(i)} for i in range(0,goal["wells"])]
 
@@ -105,7 +147,8 @@ def layout_CDM(layout,goal=ex_goal,media=example_media,filename="goals.csv"):
 
 
 if __name__=="__main__":
-	layout_CDM(example_layout)
+	print(yaml.dump(leave_one_out()))
+	#layout_CDM(example_layout)
 
 
 
