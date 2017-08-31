@@ -19,4 +19,6 @@ Both of these should be generated from bartender.
 
 The bartender robot creates goals.csv files and state.yaml files. In the near future(#TODO) it will use media definitions and experimental specifications from a file.
 
-It's called like `./bartender.py media.yaml experiment.yaml`
+For a complete bartender, do './bartender goal.yaml media.yaml layout.yaml' and your goals will be in goals.csv
+
+If you want to just input a dictionary of specifications, there's a function plan_to_goals that'll do that for you. Calling it is your responsibility for now.
