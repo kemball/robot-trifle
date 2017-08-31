@@ -42,6 +42,10 @@ def offset_name(offset):
 	lp = int((offset)/8+1)
 	return "%s%s"%(fp,lp)
 
+def _generic_parse_yaml(file):
+	with open(file,'r') as fo:
+		return yaml.load(fo)
+
 
 def parse_layout(layfile):
 	with open(layfile,'r') as lfile:
@@ -49,6 +53,13 @@ def parse_layout(layfile):
 	return layout
 	# this should check for compatibility with a bunch of stuff
 	# does the layout file have insane volumes
+
+parse_plan = _generic_parse_yaml
+
+parse_goal = _generic_parse_yaml
+
+parse_media = _generic_parse_yaml
+#renaming functions 
 
 def leave_one_out(goal=ex_goal,media=example_media):
 
@@ -63,7 +74,7 @@ def leave_one_out(goal=ex_goal,media=example_media):
 		for j,wn in enumerate(sorted_wells):
 			if (j<num_replicates*i) or (j>= num_replicates*(i+1)):
 				spec_dict[wn][cpd]=media[cpd]*goal["vol"]#in umols
-	return spec_dict
+	return spec_dict #'plan'
 
 def flatten(plan,layout):
 	totals = defaultdict(int)
@@ -99,19 +110,35 @@ def flatten(plan,layout):
 			if source not in allsources:
 				allsources.append(source)
 			m[source]=amt
-	fakefile = StringIO()
-	#this is silly.
-	cwriter = csv.DictWriter(fakefile,allsources,restval=0)
-	cwriter.writeheader()
-	for line in matrix:
-		cwriter.writerow(line)
-	return fakefile.getvalue()
+	return(matrix,allsources)
+
+def write_to_file(matrix,allsources,file):
+	with open(file,'w') as fakefile:
+
+		cwriter = csv.DictWriter(fakefile,allsources,restval=0)
+		cwriter.writeheader()
+		for line in matrix:
+			cwriter.writerow(line)
+		
+def plan_to_goals(planfile,layoutfile,output="goals.csv"):
+	layout = parse_layout(layoutfile)
+	plan = parse_plan(planfile)
+	(m,a) = flatten(plan,layout)
+	write_to_file(m,a,output)
 
 
 
 if __name__=="__main__":
 	spec_dict = leave_one_out()#default arguments test
-	print(yaml.dump(flatten(spec_dict,example_layout)))
+	(m,src) = flatten(spec_dict,example_layout)
+	write_to_file(m,src,"test.csv")
+	if len(sys.argv)>=4:
+		goal = parse_goal(argv[1])
+		media = parse_media(argv[2])
+		layout = parse_layout(argv[3])
+		s_d = leave_one_out(goal,media)
+		(m,a) = flatten(s_d,layout)
+		write_to_file(m,a)
 	#layout_CDM(example_layout)
 
 
