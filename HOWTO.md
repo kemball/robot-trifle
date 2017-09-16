@@ -1,4 +1,4 @@
-**From the bottom up**
+##From the bottom up
 
 The last step is to actually execute the goals on the robot.
 
@@ -12,12 +12,12 @@ Both of these should be generated from bartender.
 
 `./do_goals.py goals.csv state.yaml` from the Pi driving the robot.
 
-*notes on calibrations*
+###notes on calibrations
 	There's a script on pippin designed to merge two calibrations files and produce a third that contains all the entries from either file, and update conflicting entries. It calls merge_json.py, but it's not actually in the git repo.
 
-**Bartender**
+##Bartender
 
-The bartender robot creates goals.csv files and state.yaml files. In the near future(#TODO) it will use media definitions and experimental specifications from a file.
+The bartender code creates goals.csv files and state.yaml files. In the near future(#TODO) it will use media definitions and experimental specifications from a file.
 
 For a complete bartender, do './bartender goal.yaml media.yaml layout.yaml' and your goals will be in goals.csv
 
