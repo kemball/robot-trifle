@@ -14,10 +14,10 @@ example_media = {
 
 example_knowns = {
 	"growth":[
-		["glucose","niacin","NaCl","biotin","arginine","alanine","tryptophan"]
+		set(["glucose","niacin","NaCl","biotin","arginine","alanine","tryptophan"])
 	],
 	"no_growth":[
-		["NaCl"]
+		set(["NaCl"])
 	]
 }
 
@@ -44,32 +44,54 @@ def BFS(knowns=example_knowns,media=example_media):
 
 
 
-def sibling_sharing(media,higher_dead_ingredients=[],oracle=lambda x: True):
-	dead_ingredients=higher_dead_ingredients
-	#don't modify the higher_dead_ingredients, or they'll propagate up
-	if not oracle(media):
-		return None
+def sibling_sharing(media,dead_ingredients=[],oracle=lambda x: len(x)>0):
+	#media is a set()
+	solutions = []
 	for ing in media:
 		if ing in dead_ingredients:
 			continue
-		smallmedia = [i for i in media if i is not ing]
-		result = sibling_sharing(smallmedia,dead_ingredients,oracle)
+		smallmedia = set([i for i in media if i is not ing])
+		result = oracle(smallmedia)
 		if not result:
 			dead_ingredients.append(ing)
 		else:
-			return result # oh hell this is DFS
-	if len(dead_ingredients)==len(media):
+			# god damn it dead_ingredients got propagated across and modified by its children's children
+			# the full slice [:] copies the list.
+			new_sol = sibling_sharing(smallmedia,dead_ingredients[:],oracle)
+			for sol in new_sol:
+				if sol not in solutions:
+					solutions.append(sol)
+	if len(solutions)==0:
 		#all are fatal, this is minimal
-		return media
+		return [media]
+	minimal_size = min(map(len,solutions))
+	return solutions
+
 
 def _stupid_oracle(media):
-	if "glucose" in media or "NaCl" in media and "niacin" in media:
+	if( "NaCl" in media) and ("niacin" in media or "glucose" in media):
+		return True
+	if ("biotin" in media):
 		return True
 	return False
 
+def oracle(media, knowns):
+	if media in knowns["no_growth"]:
+		return False
+	elif media in knowns["growth"]:
+		return True
+	else:
+		print( media)
+		return False
+
+from functools import partial
+known_oracle = partial(oracle,knowns=example_knowns)
+
 if __name__=="__main__":
-	list_media=list(example_media.keys())
-	print(sibling_sharing(list_media,[],_stupid_oracle))
+	list_media=set(list(example_media.keys()))
+	print("full: ",list_media)
+	print("minimal ",sibling_sharing(list_media,[],known_oracle))
+	#print(sibling_sharing(list_media))
 
 
 
