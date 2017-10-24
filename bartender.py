@@ -20,12 +20,14 @@ example_layout ={
 	}
 }
 
-
 example_media = {
-	#in M
-	"niacin":.1,
-	"biotin":.2,
-	"glucose":.01
+	"glucose":1,
+	"niacin":.01,
+	"NaCl":.01,
+	"biotin":.0005,
+	"alanine":.002,
+	"arginine":.005,
+	"tryptophan":.00015,
 }
 
 ex_goal={
@@ -59,6 +61,8 @@ parse_plan = _generic_parse_yaml
 parse_goal = _generic_parse_yaml
 
 parse_media = _generic_parse_yaml
+
+parse_proposals = _generic_parse_yaml
 #renaming functions 
 
 def leave_one_out(goal=ex_goal,media=example_media):
@@ -75,6 +79,18 @@ def leave_one_out(goal=ex_goal,media=example_media):
 			if (j<num_replicates*i) or (j>= num_replicates*(i+1)):
 				spec_dict[wn][cpd]=media[cpd]*goal["vol"]#in umols
 	return spec_dict #'plan'
+
+def proposals(proposed =[],media=example_media,goal=ex_goal):
+	dest_wellnames = [goal["name"]+"."+offset_name(i) for i in range(0,goal["wells"])]
+	sorted_wells = sorted(dest_wellnames)
+	num_replicates = int(goal["wells"]/len(proposed))
+	spec_dict = {dw:{} for dw in dest_wellnames}
+	for i,prop in enumerate(proposed):
+		for j,wn in enumerate(sorted_wells):
+			if (j<num_replicates*i) or (j>= num_replicates*(i+1)):
+				for cpd in prop:
+					spec_dict[wn][cpd]=media[cpd]*goal["vol"]#in umols	
+	return spec_dict
 
 def flatten(plan,layout):
 	totals = defaultdict(int)
@@ -129,17 +145,18 @@ def plan_to_goals(planfile,layoutfile,output="goals.csv"):
 
 
 if __name__=="__main__":
-	spec_dict = leave_one_out()#default arguments test
-	(m,src) = flatten(spec_dict,example_layout)
-	write_to_file(m,src,"test.csv")
-	if len(sys.argv)>=4:
-		goal = parse_goal(argv[1])
+	usage = "bartender.py new_proposals.yaml media.yaml goal.yaml layout.yaml"
+	if len(sys.argv<5):
+		print(usage)
+	else:
+		props = parse_proposals(argv[1])
 		media = parse_media(argv[2])
-		layout = parse_layout(argv[3])
-		s_d = leave_one_out(goal,media)
-		(m,a) = flatten(s_d,layout)
-		write_to_file(m,a)
-	#layout_CDM(example_layout)
+		goal = parse_goal(argv[3])
+		layout = parse_layout(argv[4])
+		plan = proposals(props,media,goal)
+		m,a = flatten(plan,layout)
+		write_to_file(m,a,"goals.csv")
+		print("goals.csv contains your new goals") 
 
 
 
