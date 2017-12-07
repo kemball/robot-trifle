@@ -30,5 +30,7 @@ def setup_robot():
 		robot._driver.speeds['z']=1200
 	for (axis,pipette) in robot.get_instruments():
 		pipette.load_persisted_data()
-	yield robot
-	robot.disconnect()
+	try:
+		yield robot
+	finally:
+		robot.disconnect()

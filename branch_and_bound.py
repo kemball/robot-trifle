@@ -63,7 +63,6 @@ def sibling_sharing(media,dead_ingredients=[],oracle=lambda x: len(x)>0):
 	if len(solutions)==0:
 		#all are fatal, this is minimal
 		return [media]
-	#minimal_size = min(map(len,solutions))
 	return solutions
 
 
@@ -101,7 +100,7 @@ if __name__=="__main__":
 		with open("example_knowns.yaml",'w') as yf:
 			yaml.dump(example_knowns,yf)
 		with open("example_proposed.yaml","w") as pf:
-			yaml.dump(proposals,pf)
+			yaml.dump([list(p) for p in proposals],pf)
 		print("proposed: ", "\n".join(map(str,proposals)))
 	else:
 		with open(argv[1],'r') as kf:
@@ -114,7 +113,7 @@ if __name__=="__main__":
 		print("minimal ",sibling_sharing(list_media,[],known_oracle))
 		print("proposed new experiments: ",proposals)
 		with open("new_proposed.yaml","w") as pf:
-			yaml.dump(proposals.pf)
+			yaml.dump([list(p) for p in proposals],pf)
 
 	#print(sibling_sharing(list_media))
 

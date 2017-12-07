@@ -37,9 +37,7 @@ def parse_state(statefile):
 
 
 def accomplish_goals(goals,deckstate,robot=Robot()):
-
 	pip = robot.get_instruments()[0][1]
-
 	#do stuff with deckstate to set current volumes of all the wells
 	for container_name in deckstate.keys():
 			container_instance = robot.deck.containers()[container_name]
@@ -59,7 +57,6 @@ def accomplish_goals(goals,deckstate,robot=Robot()):
 				get_from_fat_well(float(destination_amount),s_well,pip)
 				pip.dispense(d_well)
 				#TODO: annotate the goals somehow
-				#pip.transfer(s_well,d_well,destination_amount)
 
 
 	except:

@@ -10,10 +10,6 @@ from stockings.robot_goals import parse_goals,parse_state,accomplish_goals
 
 
 
-#TODO:
-#ok, so:
-# bartender gotta be split in two
-# 
 
 
 	

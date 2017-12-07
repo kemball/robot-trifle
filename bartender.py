@@ -1,5 +1,4 @@
 import yaml
-import sys
 import csv
 from collections import defaultdict
 from io import StringIO
@@ -16,9 +15,25 @@ example_layout ={
 	"sleepy":{
 		"A1":("glucose",200,5),
 		"A2":("glucose",200,5),
+		"A3":("glucose",5000,5),
 		"A3":("water",200,66)
+	},
+	"dopey":{
+		"A1":("NaCl",200,1),
+		"A2":("alanine",200,1),
+		"A3":("arginine",200,1),
+		"A4":("tryptophan",200,1)
 	}
 }
+
+def convert_layout_to_state(layout):
+	state = {}
+	for key,value in layout.items():
+		state[key] = value
+	for _,value in state.items():
+		for k,v in value.items():
+			value[k] = v[1]
+	return state
 
 example_media = {
 	"glucose":1,
@@ -32,7 +47,7 @@ example_media = {
 
 ex_goal={
 	"wells":96,
-	"vol":200, #in umol
+	"vol":10, #in umol
 	"name":"destination",
 	"excess":"water"
 }
@@ -103,16 +118,17 @@ def flatten(plan,layout):
 				contents[1],
 				contents[2]))
 	
-	def get_from_locations(cpd,moles,locations):
+	
+	def get_from_locations(cpd,umoles,locations):
 		for i,loc in enumerate(locations[cpd]):
 			source,volume,molarity = loc
-			if volume*molarity>= moles:
-				amt = moles/molarity
+			if volume*molarity>= umoles:
+				amt = umoles/molarity
 				nt = (source,volume-amt,molarity)
 				#i have to do it this way because tuples are immutable.
 				locations[cpd][i] = nt
 				return(source,amt)
-		print("not enough %s " % cpd)
+		raise Exception("I won't pool the last little bits of this. I need more %s" %compound)
 
 	matrix = [{"wellname":k} for k in plan.keys()]
 	allsources=["wellname"]
@@ -145,8 +161,13 @@ def plan_to_goals(planfile,layoutfile,output="goals.csv"):
 
 
 if __name__=="__main__":
+	from sys import argv
 	usage = "bartender.py new_proposals.yaml media.yaml goal.yaml layout.yaml"
-	if len(sys.argv<5):
+	if len(argv)<5:
+		with open('example_goal.yaml','w') as gf:
+			yaml.dump(ex_goal,gf)
+		with open('example_layout.yaml','w') as lf:
+			yaml.dump(example_layout,lf)
 		print(usage)
 	else:
 		props = parse_proposals(argv[1])
@@ -156,7 +177,9 @@ if __name__=="__main__":
 		plan = proposals(props,media,goal)
 		m,a = flatten(plan,layout)
 		write_to_file(m,a,"goals.csv")
-		print("goals.csv contains your new goals") 
+		with open('statefile.yaml','w') as sf:
+			yaml.dump(convert_layout_to_state(layout),sf)
+		print("goals.csv contains your new goals, and statefile.yaml contains your new board state.") 
 
 
 
